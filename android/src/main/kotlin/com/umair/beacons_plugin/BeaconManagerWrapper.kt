@@ -23,20 +23,17 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
         private const val CHANNEL_ID = "Beacon Manager Channel"
         private const val CHANNEL_NAME = "Beacon Manager Notifications"
         private const val CHANNEL_DESCRIPTION = "Notifies about updates on beacon scanning and detection"
-        private const val NOTIFICATION_ID = 456
+        private const val NOTIFICATION_ID = 123
 
         @JvmStatic
         private val iBeaconParser = BeaconParser("ibeacon").setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
     }
 
     private val appContext = context.applicationContext
-    private val manager = BeaconManager.getInstanceForApplication(appContext)
+    private val beaconManager = BeaconManager.getInstanceForApplication(appContext)
+    private val notificationManager = appContext.getTypedSystemService<NotificationManager>(Context.NOTIFICATION_SERVICE)
     private val powerSaver = BackgroundPowerSaver(appContext)
-
-    private val notification = NotificationCompat.Builder(appContext, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Scanning for Beacons")
-            .build()
+    private val preferences = BeaconPreferences.getInstance(appContext)
 
     private val regions = mutableSetOf<Region>()
 
@@ -44,16 +41,16 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.getTypedSystemService<NotificationManager>(Context.NOTIFICATION_SERVICE)
-                    ?.createNotificationChannel(NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT).apply {
-                        description = CHANNEL_DESCRIPTION
-                    })
+            notificationManager?.createNotificationChannel(
+                    NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+                            .apply { description = CHANNEL_DESCRIPTION }
+            )
         }
-        manager.beaconParsers.add(iBeaconParser)
-        manager.enableForegroundServiceScanning(notification, NOTIFICATION_ID)
-        manager.setEnableScheduledScanJobs(false)
-        manager.backgroundBetweenScanPeriod = 0
-        manager.backgroundScanPeriod = 1100
+        beaconManager.beaconParsers.add(iBeaconParser)
+        beaconManager.enableForegroundServiceScanning(buildNotification(), NOTIFICATION_ID)
+        beaconManager.setEnableScheduledScanJobs(false)
+        beaconManager.backgroundBetweenScanPeriod = 0
+        beaconManager.backgroundScanPeriod = 1100
     }
 
     override fun getApplicationContext(): Context = appContext
@@ -89,11 +86,22 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
         }
     }
 
+    fun setNotification(title: String, text: String) {
+        Log.d(TAG, "setNotification: title = $title, text = $text")
+        preferences.edit {
+            putString(BeaconPreferences.KEY_NOTIFICATION_TITLE, title)
+            putString(BeaconPreferences.KEY_NOTIFICATION_TEXT, text)
+        }
+        if (beaconManager.isBound(this)) {
+            notificationManager?.notify(NOTIFICATION_ID, buildNotification())
+        }
+    }
+
     fun addRegion(identifier: String, uuid: String) {
         val region = Region(identifier, Identifier.fromUuid(UUID.fromString(uuid)), null, null)
         Log.d(TAG, "addRegion: region = $region")
         if (!regions.contains(region)) {
-            if (manager.isBound(this)) {
+            if (beaconManager.isBound(this)) {
                 tryStartMonitoringBeaconsInRegion(region)
             } else {
                 Log.w(TAG, "addRegion: service not bound yet")
@@ -114,10 +122,10 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
 
     fun startScanning() {
         Log.d(TAG, "startScanning")
-        if (manager.isBound(this)) {
+        if (beaconManager.isBound(this)) {
             regions.forEach { tryStartMonitoringBeaconsInRegion(it) }
         } else {
-            manager.bind(this)
+            beaconManager.bind(this)
         }
     }
 
@@ -125,30 +133,36 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
         Log.d(TAG, "stopScanning")
         removeNotifiers()
         stopRangingAndMonitoring()
-        manager.unbind(this)
+        beaconManager.unbind(this)
     }
+
+    private fun buildNotification() = NotificationCompat.Builder(appContext, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(preferences.getString(BeaconPreferences.KEY_NOTIFICATION_TITLE, BeaconPreferences.DEFAULT_NOTIFICATION_TITLE))
+            .setContentText(preferences.getString(BeaconPreferences.KEY_NOTIFICATION_TEXT, BeaconPreferences.DEFAULT_NOTIFICATION_TEXT))
+            .build()
 
     private fun addNotifiers() {
         Log.d(TAG, "addNotifiers")
-        manager.addMonitorNotifier(this)
-        manager.addRangeNotifier(this)
+        beaconManager.addMonitorNotifier(this)
+        beaconManager.addRangeNotifier(this)
     }
 
     private fun removeNotifiers() {
         Log.d(TAG, "removeNotifiers")
-        manager.removeRangeNotifier(this)
-        manager.removeMonitorNotifier(this)
+        beaconManager.removeRangeNotifier(this)
+        beaconManager.removeMonitorNotifier(this)
     }
 
     private fun stopRangingAndMonitoring() {
         Log.d(TAG, "stopRangingAndMonitoring")
-        manager.rangedRegions.forEach { tryStopRangingBeaconsInRegion(it) }
-        manager.monitoredRegions.forEach { tryStopMonitoringBeaconsInRegion(it) }
+        beaconManager.rangedRegions.forEach { tryStopRangingBeaconsInRegion(it) }
+        beaconManager.monitoredRegions.forEach { tryStopMonitoringBeaconsInRegion(it) }
     }
 
     private fun tryStartMonitoringBeaconsInRegion(region: Region) {
         try {
-            manager.startMonitoringBeaconsInRegion(region)
+            beaconManager.startMonitoringBeaconsInRegion(region)
         } catch (e: RemoteException) {
             Log.e(TAG, "startMonitoringBeaconsInRegion: error", e)
         }
@@ -156,7 +170,7 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
 
     private fun tryStopMonitoringBeaconsInRegion(region: Region) {
         try {
-            manager.stopMonitoringBeaconsInRegion(region)
+            beaconManager.stopMonitoringBeaconsInRegion(region)
         } catch (e: RemoteException) {
             Log.e(TAG, "stopMonitoringBeaconsInRegion: error", e)
         }
@@ -164,7 +178,7 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
 
     private fun tryStartRangingBeaconsInRegion(region: Region) {
         try {
-            manager.startRangingBeaconsInRegion(region)
+            beaconManager.startRangingBeaconsInRegion(region)
         } catch (e: RemoteException) {
             Log.e(TAG, "startRangingBeaconsInRegion: error", e)
         }
@@ -172,7 +186,7 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
 
     private fun tryStopRangingBeaconsInRegion(region: Region) {
         try {
-            manager.stopRangingBeaconsInRegion(region)
+            beaconManager.stopRangingBeaconsInRegion(region)
         } catch (e: RemoteException) {
             Log.e(TAG, "stopRangingBeaconsInRegion: error", e)
         }

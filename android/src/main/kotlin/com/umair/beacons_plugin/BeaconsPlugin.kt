@@ -129,6 +129,12 @@ class BeaconsPlugin :
                     beaconManagerWrapper.clearRegions()
                     result.success("Regions Cleared")
                 }
+                "setNotification" -> {
+                    val title = call.requireArgument<String>("title")
+                    val text = call.requireArgument<String>("text")
+                    beaconManagerWrapper.setNotification(title, text)
+                    result.success("Notification Set: $title, $text")
+                }
                 "runInBackground" -> {
                     runInBackground = call.requireArgument("background")
                     result.success("App will run in background? $runInBackground")

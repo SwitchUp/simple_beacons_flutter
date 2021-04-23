@@ -27,6 +27,12 @@ class BeaconsPlugin {
     return result;
   }
 
+  static Future<void> setNotification(String title, String text) async {
+    final String result = await channel.invokeMethod(
+        'setNotification', <String, dynamic>{'title': title, 'text': text});
+    printDebugMessage(result, 2);
+  }
+
   static Future<void> startMonitoring() async {
     final String result = await channel.invokeMethod('startMonitoring');
     printDebugMessage(result, 2);
