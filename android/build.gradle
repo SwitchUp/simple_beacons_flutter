@@ -43,8 +43,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
-    implementation 'com.jakewharton.timber:timber:4.7.1'
 
     //Android Alt-Beacon Library
-    implementation 'org.altbeacon:android-beacon-library:2.16.4'
+    implementation 'org.altbeacon:android-beacon-library:2.17.1'
 }

@@ -21,6 +21,12 @@ class BeaconsPlugin {
     }
   }
 
+  static Future<bool> initialize() async {
+    final bool result = await channel.invokeMethod('initialize');
+    printDebugMessage('initialized = $result', 2);
+    return result;
+  }
+
   static Future<void> startMonitoring() async {
     final String? result = await channel.invokeMethod('startMonitoring');
     printDebugMessage(result, 2);
