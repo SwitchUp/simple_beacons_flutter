@@ -81,7 +81,7 @@ class BeaconManagerWrapper(context: Context): BeaconConsumer, MonitorNotifier, R
     override fun didRangeBeaconsInRegion(beacons: MutableCollection<Beacon>, region: Region) {
         beacons.forEach {
             val identifier = it.id1.toString()
-            val uniqueId = regions.find { r -> r.id1.toString() == identifier }?.uniqueId
+            val uniqueId = regions.find { r -> r.id1?.toString() == identifier }?.uniqueId
             eventSink?.success(BeaconModel(uniqueId, it).toString())
         }
     }
