@@ -29,7 +29,9 @@ class BeaconsPlugin {
 
   static Future<void> setNotification(String title, String text) async {
     final String result = await channel.invokeMethod(
-        'setNotification', <String, dynamic>{'title': title, 'text': text});
+      'setNotification',
+      <String, dynamic>{'title': title, 'text': text},
+    );
     printDebugMessage(result, 2);
   }
 
@@ -45,7 +47,9 @@ class BeaconsPlugin {
 
   static Future<void> addRegion(String identifier, String uuid) async {
     final String result = await channel.invokeMethod(
-        'addRegion', <String, dynamic>{'identifier': identifier, 'uuid': uuid});
+      'addRegion',
+      <String, dynamic>{'identifier': identifier, 'uuid': uuid},
+    );
     printDebugMessage(result, 2);
   }
 
@@ -70,16 +74,23 @@ class BeaconsPlugin {
     printDebugMessage(result, 2);
   }
 
-  static Future<void> setDisclosureDialogMessage(
-      {String title, String message}) async {
+  static Future<void> setDisclosureDialogMessage({
+    required String title,
+    required String message,
+  }) async {
     final String result = await channel.invokeMethod(
-        'setDisclosureDialogMessage',
-        <String, dynamic>{'title': title, 'message': message});
+      'setDisclosureDialogMessage',
+      <String, dynamic>{'title': title, 'message': message},
+    );
     printDebugMessage(result, 2);
   }
 
   static Future<void> addRegionForIOS(
-      String uuid, int major, int minor, String name) async {
+    String uuid,
+    int major,
+    int minor,
+    String name,
+  ) async {
     final String result = await channel.invokeMethod(
       'addRegionForIOS',
       <String, dynamic>{
