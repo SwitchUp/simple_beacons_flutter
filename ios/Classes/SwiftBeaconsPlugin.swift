@@ -6,7 +6,6 @@ public class SwiftBeaconsPlugin: NSObject, FlutterPlugin {
 
     var eventSink: FlutterEventSink?
     let locationManager = CLLocationManager()
-    var runInBackground = false
 
     var listOfRegions = [Item]()
 
@@ -26,23 +25,7 @@ public class SwiftBeaconsPlugin: NSObject, FlutterPlugin {
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
 
         // flutter cmds dispatched on iOS device :
-        if call.method == "addRegionForIOS" {
-            guard let args = call.arguments else {
-                return
-            }
-            if let myArgs = args as? [String: Any],
-                let uuid = myArgs["uuid"] as? String,
-                // let major = myArgs["major"] as? Int,
-                // let minor = myArgs["minor"] as? Int,
-                let name = myArgs["name"] as? String
-            {
-                // addRegion(uuid: uuid, major: major, minor: minor, name: name)
-                addRegion(uuid: uuid, name: name)
-                result("Region Added.")
-            } else {
-                result("iOS could not extract flutter arguments in method: (addRegion)")
-            }
-        } else if call.method == "addRegion" {
+        if call.method == "addRegion" {
             guard let args = call.arguments else {
                 return
             }
@@ -50,38 +33,29 @@ public class SwiftBeaconsPlugin: NSObject, FlutterPlugin {
                 let name = myArgs["identifier"] as? String,
                 let uuid = myArgs["uuid"] as? String
             {
-                // addRegion(uuid: uuid, major: major, minor: minor, name: name)
                 addRegion(uuid: uuid, name: name)
                 result("Region Added.")
             } else {
                 result("iOS could not extract flutter arguments in method: (addRegion)")
             }
-        } else if call.method == "clearRegions"{
+        } else if call.method == "clearRegions" {
             clearRegions()
             result("Regions cleared.")
-        } else if call.method == "startMonitoring"{
+        } else if call.method == "startMonitoring" {
             locationManager.delegate = self
             startScanning()
             result("Started scanning Beacons.")
-        }else if call.method == "stopMonitoring"{
+        } else if call.method == "stopMonitoring" {
             stopScanning()
             result("Stopped scanning Beacons.")
-        }else if call.method == "runInBackground"{
-            runInBackground = true
-            result("App will run in background? \(runInBackground)")
-        }else {
+        } else {
             result("Flutter method not implemented on iOS")
         }
     }
 
-    // func addRegion(uuid:String?, major:Int, minor:Int, name:String){
     func addRegion(uuid:String?, name:String){
         guard let uuid = UUID(uuidString: uuid ?? "") else { return; }
-        // let major = major
-        // let minor = minor
         let name = name
-
-        // let newItem = Item(name: name, uuid: uuid, majorValue: major, minorValue: minor)
         let newItem = Item(name: name, uuid: uuid)
         listOfRegions.append(newItem)
     }

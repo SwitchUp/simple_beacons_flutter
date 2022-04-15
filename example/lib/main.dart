@@ -65,17 +65,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     if (Platform.isAndroid) {
-      //Prominent disclosure
-      await BeaconsPlugin.setDisclosureDialogMessage(
-          title: "Background Locations",
-          message:
-              "[This app] collects location data to enable [feature], [feature], & [feature] even when the app is closed or not in use");
-
-      //Only in case, you want the dialog to be shown again. By Default, dialog will never be shown if permissions are granted.
-      //await BeaconsPlugin.clearDisclosureDialogShowFlag(false);
-    }
-
-    if (Platform.isAndroid) {
+      final initialized = await BeaconsPlugin.initialize();
+      if (initialized) {
+        _showNotification("Beacons monitoring started..");
+        await BeaconsPlugin.startMonitoring();
+        setState(() {
+          isRunning = true;
+        });
+      } else {
+        _showNotification(
+            "Beacons monitoring can't start because permissions were denied");
+      }
       BeaconsPlugin.channel.setMethodCallHandler((call) async {
         print("Method: ${call.method}");
         if (call.method == 'scannerReady') {
@@ -104,17 +104,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     await BeaconsPlugin.addRegion(
         "BeaconType2", "6a84c716-0f2a-1ce9-f210-6a63bd873dd9");
 
-    BeaconsPlugin.addBeaconLayoutForAndroid(
-        "m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25");
-    BeaconsPlugin.addBeaconLayoutForAndroid(
-        "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24");
-
-    BeaconsPlugin.setForegroundScanPeriodForAndroid(
-        foregroundScanPeriod: 2200, foregroundBetweenScanPeriod: 10);
-
-    BeaconsPlugin.setBackgroundScanPeriodForAndroid(
-        backgroundScanPeriod: 2200, backgroundBetweenScanPeriod: 10);
-
     beaconEventsController.stream.listen(
         (data) {
           if (data.isNotEmpty && isRunning) {
@@ -135,9 +124,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         onError: (error) {
           print("Error: $error");
         });
-
-    //Send 'true' to run in background
-    await BeaconsPlugin.runInBackground(true);
 
     if (!mounted) return;
   }
@@ -213,7 +199,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     var rng = new Random();
     Future.delayed(Duration(seconds: 5)).then((result) async {
       var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-          'your channel id', 'your channel name', 'your channel description',
+          'your channel id', 'your channel name',
+          channelDescription: 'your channel description',
           importance: Importance.high,
           priority: Priority.high,
           ticker: 'ticker');
