@@ -6,14 +6,4 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
-    <application>
-        <service
-            android:name="org.altbeacon.beacon.service.BeaconService"
-            tools:node="replace">
-            <meta-data
-                android:name="longScanForcingEnabled"
-                android:value="true" />
-        </service>
-    </application>
 </manifest>
