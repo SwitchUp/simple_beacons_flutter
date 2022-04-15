@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+
 import 'package:beacons_plugin/beacons_plugin.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +13,7 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends State<MyApp> {
   String _beaconResult = 'Not Scanned Yet.';
   String _debugMessage = '';
   int _nrMessagesReceived = 0;
@@ -22,34 +22,32 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   final ScrollController _scrollController = ScrollController();
 
-  final StreamController<String> beaconEventsController =
+  final StreamController<String> _beaconEventsController =
       StreamController<String>.broadcast();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addObserver(this);
     _initStateAsync();
   }
 
   @override
   void dispose() {
-    beaconEventsController.close();
-    WidgetsBinding.instance?.removeObserver(this);
+    _beaconEventsController.close();
     super.dispose();
   }
 
   Future<void> _initStateAsync() async {
     await _startMonitoring();
 
-    BeaconsPlugin.listenToBeacons(beaconEventsController);
+    BeaconsPlugin.listenToBeacons(_beaconEventsController);
 
     await BeaconsPlugin.addRegion(
         "BeaconType1", "909c3cf9-fc5c-4841-b695-380958a51a5a");
     await BeaconsPlugin.addRegion(
         "BeaconType2", "6a84c716-0f2a-1ce9-f210-6a63bd873dd9");
 
-    beaconEventsController.stream.listen(
+    _beaconEventsController.stream.listen(
       (data) {
         if (data.isNotEmpty && _isRunning) {
           setState(() {
@@ -129,8 +127,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<void> _startMonitoring() async {
-    final initialized =
-        Platform.isAndroid ? await BeaconsPlugin.initialize() : true;
+    final initialized = await BeaconsPlugin.initialize();
     if (initialized) {
       await BeaconsPlugin.startMonitoring();
       setState(() {

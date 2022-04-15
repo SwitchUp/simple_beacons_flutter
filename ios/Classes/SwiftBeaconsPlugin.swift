@@ -6,7 +6,6 @@ public class SwiftBeaconsPlugin: NSObject, FlutterPlugin {
 
     var eventSink: FlutterEventSink?
     let locationManager = CLLocationManager()
-
     var listOfRegions = [Item]()
 
     init(eventSink: FlutterEventSink?) {
@@ -15,17 +14,15 @@ public class SwiftBeaconsPlugin: NSObject, FlutterPlugin {
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let fChannel = FlutterMethodChannel(name: "beacons_plugin", binaryMessenger: registrar.messenger())
-
         let eventChannel = FlutterEventChannel(name: "beacons_plugin_stream", binaryMessenger: registrar.messenger())
-
         let eventHandler = EventsStreamHandler(channel: fChannel, registrar: registrar)
         eventChannel.setStreamHandler(eventHandler)
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-
-        // flutter cmds dispatched on iOS device :
-        if call.method == "addRegion" {
+        if call.method == "initialize" {
+            result(true)
+        } else if call.method == "addRegion" {
             guard let args = call.arguments else {
                 return
             }
@@ -109,7 +106,6 @@ extension SwiftBeaconsPlugin: CLLocationManagerDelegate {
     }
 
     public func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
-
         for beacon in beacons {
           for row in 0..<listOfRegions.count {
             if listOfRegions[row] == beacon {
@@ -124,7 +120,7 @@ extension SwiftBeaconsPlugin: CLLocationManagerDelegate {
                   "  \"proximity\": \"\(listOfRegions[row].nameForProximity(beacon.proximity))\"\n" +
                   "}"
 
-                  //Send data to flutter
+                  // Send data to Flutter
                   eventSink?("\(data)")
             }
           }

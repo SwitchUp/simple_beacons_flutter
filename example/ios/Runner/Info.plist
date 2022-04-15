@@ -28,15 +28,6 @@
 	<string>App needs location permissions to scan nearby beacons.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>App needs location permissions to scan nearby beacons.</string>
-    <key>UIBackgroundModes</key>
-    <array>
-       <string>bluetooth-central</string>
-    </array>
-	<array>
-		<string>bluetooth-central</string>
-		<string>fetch</string>
-		<string>processing</string>
-	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
